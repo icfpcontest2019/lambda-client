@@ -61,6 +61,6 @@ if __name__ == '__main__':
     try:
         args.port = int(args.port)
     except ValueError:
-        parser.error("Port must be an integer.")
+        parser.error('Port must be an integer.')
 
     run_simple(args.bind, args.port, application)

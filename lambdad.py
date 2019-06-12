@@ -84,7 +84,7 @@ def submit(block_num, sol_path, desc_path):
     data = {'private_id': PRIVATE_ID, 'block_num': block_num}
     files = {'solution': open(sol_path), 'puzzle': open(desc_path)}
     response = requests.post(url, data=data, files=files, allow_redirects=True)
-    return str(response.content)
+    return response.json()
 
 # Auto-update logic
 def have_block(block_num):

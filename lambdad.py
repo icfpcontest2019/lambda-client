@@ -33,6 +33,12 @@ lock = threading.RLock()
 CACHE_TIME = 5
 REFRESH_TIME = CACHE_TIME + 0   # no reason for this to be smaller than CACHE_TIME
 
+TASK_FILE = "task.desc"
+PUZZLE_FILE = "puzzle.cond"
+BALANCES_FILE = "balances.json"
+TS_FILE = "timestamp.txt"
+DONE_FILE = ".done"
+
 CONFIG_FILE = 'lambda.conf'
 # Populated by config
 DEFAULT_BIND_ADDR = '127.0.0.1'
@@ -88,16 +94,50 @@ def submit(block_num, sol_path, desc_path):
 
 # Auto-update logic
 def have_block(block_num):
-    pass
+    block_num = str(block_num)
+    df = os.path.join(DATA_DIR, block_num, DONE_FILE)
+    return os.path.exists(df)
 
 def save_block(block_info):
-    pass
+    block_num = str(block_info['block'])
+    ts = block_info['block_ts']
+    balances = block_info['balances']
+    task = block_info['task']
+    puzzle = block_info['puzzle']
+
+    bd = os.path.join(DATA_DIR, block_num)
+    os.makedirs(bd, exist_ok=True)
+    tsf = os.path.join(bd, TS_FILE)
+    bf = os.path.join(bd, BALANCES_FILE)
+    tf = os.path.join(bd, TASK_FILE)
+    pf = os.path.join(bd, PUZZLE_FILE)
+    df = os.path.join(bd, DONE_FILE)
+
+    with open(tsf, 'w') as f:
+        f.write(str(ts))
+    with open(bf, 'w') as f:
+        json.dump(balances, f)
+    with open(tf, 'w') as f:
+        f.write(task)
+    with open(pf, 'w') as f:
+        f.write(puzzle)
+
+    # Create the DONE file
+    with open(df, 'w') as f:
+        f.close()
 
 # Update every REFRESH_TIME seconds
 @every(REFRESH_TIME)
 def update():
-    # block_info = getblockinfo()
-    pass
+    block_info = getblockinfo()
+    block_num = block_info['block']
+
+    if not have_block(block_num):
+        save_block(block_info)
+
+    # Fill in gaps if they exist
+    for b in range(1, block_num):
+        save_block(getblockinfo(b))
 
 # Daemon
 @Request.application

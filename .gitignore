@@ -1,6 +1,7 @@
 .vscode/
 *.sol
 *.desc
+blocks/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

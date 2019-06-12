@@ -4,19 +4,45 @@ from werkzeug.serving import run_simple
 from jsonrpc import JSONRPCResponseManager, dispatcher
 from cachetools import cached, TTLCache
 import urllib, urllib.parse
+import requests
 import json
 import argparse
-from threading import RLock
+import threading
+import os
+import configparser
+
+# https://stackoverflow.com/questions/12435211/python-threading-timer-repeat-function-every-n-seconds
+def every(interval):
+    def decorator(function):
+        def wrapper(*args, **kwargs):
+            stopped = threading.Event()
+
+            def loop(): # executed in another thread
+                while not stopped.wait(interval): # until stopped
+                    function(*args, **kwargs)
+
+            t = threading.Thread(target=loop)
+            t.daemon = True # stop if the program exits
+            t.start()
+            return stopped
+        return wrapper
+    return decorator
 
 # In case of multi-threaded acceses: keep cache coherent
-lock = RLock()
+lock = threading.RLock()
+CACHE_TIME = 5
+REFRESH_TIME = CACHE_TIME + 0   # no reason for this to be smaller than CACHE_TIME
 
+CONFIG_FILE = 'lambda.conf'
+# Populated by config
 DEFAULT_BIND_ADDR = '127.0.0.1'
 DEFAULT_PORT = 8332
-CACHE_TIME = 5
+DATA_DIR = 'blocks/'
+BLOCKCHAIN_ENDPOINT = 'http://localhost:5000/lambda/'
+PRIVATE_ID = None
+PUBLIC_ID = None
 
 # Totally decentralised!
-BLOCKCHAIN_ENDPOINT = 'http://localhost:5000/lambda/'
 def pass_through(method_name, arg=None):
     url = urllib.parse.urljoin(BLOCKCHAIN_ENDPOINT, method_name)
     if arg is not None:
@@ -42,8 +68,36 @@ def getbalances():
 
 @dispatcher.add_method
 @cached(cache=TTLCache(maxsize=1, ttl=CACHE_TIME), lock=lock)
-def getbalance(id):
+def getbalance(id=None):
+    if id is None:
+        id = PUBLIC_ID
     return pass_through('getbalance', id)
+
+@dispatcher.add_method
+@cached(cache=TTLCache(maxsize=1, ttl=CACHE_TIME), lock=lock)
+def getblockinfo(block_num=None):
+    return pass_through('getblockinfo', block_num)
+
+@dispatcher.add_method
+def submit(block_num, sol_path, desc_path):
+    url = urllib.parse.urljoin(BLOCKCHAIN_ENDPOINT, 'submit')
+    data = {'private_id': PRIVATE_ID, 'block_num': block_num}
+    files = {'solution': open(sol_path), 'puzzle': open(desc_path)}
+    response = requests.post(url, data=data, files=files, allow_redirects=True)
+    return str(response.content)
+
+# Auto-update logic
+def have_block(block_num):
+    pass
+
+def save_block(block_info):
+    pass
+
+# Update every REFRESH_TIME seconds
+@every(REFRESH_TIME)
+def update():
+    # block_info = getblockinfo()
+    pass
 
 # Daemon
 @Request.application
@@ -53,6 +107,21 @@ def application(request):
     return Response(response.json, mimetype='application/json')
 
 if __name__ == '__main__':
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE)
+    settings = config['DEFAULT']
+    keys = config['SECRET']
+
+    # Populate global settings
+    DATA_DIR = settings.get('DataDir')
+    BLOCKCHAIN_ENDPOINT = settings.get('DecentralisationProvider')
+    DEFAULT_BIND_ADDR = settings.get('DefaultBindAddress')
+    DEFAULT_PORT = settings.getint('DefaultPort')
+
+    PRIVATE_ID = keys.get('PrivateKey')
+    PUBLIC_ID = keys.get('PublicKey')
+
+    # Parse arguments
     parser = argparse.ArgumentParser(description='JSON-RPC daemon for the LambdaCoin blockchain.')
     parser.add_argument('-b', '--bind', default=DEFAULT_BIND_ADDR, help='bind on address')
     parser.add_argument('-p', '--port', default=DEFAULT_PORT, help='listen on port')
@@ -63,4 +132,5 @@ if __name__ == '__main__':
     except ValueError:
         parser.error('Port must be an integer.')
 
+    updater = update()
     run_simple(args.bind, args.port, application)

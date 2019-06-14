@@ -137,7 +137,8 @@ def update():
 
     # Fill in gaps if they exist
     for b in range(1, block_num):
-        save_block(getblockinfo(b))
+        if not have_block(b):
+            save_block(getblockinfo(b))
 
 # Daemon
 @Request.application

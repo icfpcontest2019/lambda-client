@@ -49,6 +49,7 @@ PRIVATE_ID = None
 PUBLIC_ID = None
 
 # Totally decentralised!
+@cached(cache=TTLCache(maxsize=10, ttl=CACHE_TIME), lock=lock)
 def pass_through(method_name, arg=None):
     url = urllib.parse.urljoin(BLOCKCHAIN_ENDPOINT, method_name)
     if arg is not None:
@@ -58,29 +59,24 @@ def pass_through(method_name, arg=None):
 
 # JSON-RPC methods
 @dispatcher.add_method
-@cached(cache=TTLCache(maxsize=1, ttl=CACHE_TIME), lock=lock)
 def getblockchaininfo():
     return pass_through('getblockchaininfo')
 
 @dispatcher.add_method
-@cached(cache=TTLCache(maxsize=1, ttl=CACHE_TIME), lock=lock)
 def getmininginfo():
     return pass_through('getmininginfo')
 
 @dispatcher.add_method
-@cached(cache=TTLCache(maxsize=1, ttl=CACHE_TIME), lock=lock)
 def getbalances():
     return pass_through('getbalances')
 
 @dispatcher.add_method
-@cached(cache=TTLCache(maxsize=1, ttl=CACHE_TIME), lock=lock)
 def getbalance(id=None):
     if id is None:
         id = PUBLIC_ID
     return pass_through('getbalance', id)
 
 @dispatcher.add_method
-@cached(cache=TTLCache(maxsize=1, ttl=CACHE_TIME), lock=lock)
 def getblockinfo(block_num=None):
     return pass_through('getblockinfo', block_num)
 

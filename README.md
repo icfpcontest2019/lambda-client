@@ -75,6 +75,14 @@ example:
 
 ```
 
+#### `blocks/` folder on disk
+
+Your `lambdad.py` daemon also saves the output of `getblockinfo` on disk, in the
+`blocks/` folder relative to where `./lambdad.py` is called from. (You can
+change `DataDir` in `lambda.conf` if you want to place it somewhere else.) You
+might find this easier to integrate into your workflow than the JSON-RPC
+interface (explained below).
+
 ### Checking your own balance
 
 If you have set-up your `PublicKey` correctly in `lambda.conf`, running

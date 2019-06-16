@@ -46,6 +46,12 @@ example:
 
 To get help, run `./lambda-cli.py --help` or `./lambda-cli.py <subcommand> --help`.
 
+If you are running Windows and `./lambda-cli.py getblockchainfo` creates a
+console that disappears immediately, run:
+
+```
+python.exe lambda-cli.py getblockchainfo
+```
 
 ### Accessing JSON fields
 

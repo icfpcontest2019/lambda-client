@@ -10,6 +10,7 @@ import argparse
 import threading
 import os
 import configparser
+from datetime import datetime
 
 # https://stackoverflow.com/questions/12435211/python-threading-timer-repeat-function-every-n-seconds
 def every(interval):
@@ -125,16 +126,20 @@ def save_block(block_info):
 # Update every REFRESH_TIME seconds
 @every(REFRESH_TIME)
 def update():
-    block_info = getblockinfo()
-    block_num = block_info['block']
+    try:
+        block_info = getblockinfo()
+        block_num = block_info['block']
 
-    if not have_block(block_num):
-        save_block(block_info)
+        if not have_block(block_num):
+            save_block(block_info)
 
-    # Fill in gaps if they exist
-    for b in range(1, block_num):
-        if not have_block(b):
-            save_block(getblockinfo(b))
+        # Fill in gaps if they exist
+        for b in range(1, block_num):
+            if not have_block(b):
+                save_block(getblockinfo(b))
+    except Exception as e:
+        now = datetime.now().strftime("%c")
+        print("[{}] Update exception: {}".format(now, e))
 
 # Daemon
 @Request.application

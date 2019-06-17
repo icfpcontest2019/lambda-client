@@ -101,7 +101,7 @@ submit solutions to the block task and puzzle:
 
 ```
 ./lambda-cli.py submit --help
-# the actual file names and extensions don't matter
+# the actual file names don't matter; file extensions do (to help you catch mistakes)
 ./lambda-cli.py submit 3 path_to_task.sol path_to_puzzle_sol.desc
 ```
 

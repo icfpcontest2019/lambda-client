@@ -94,6 +94,9 @@ interface (explained below).
 If you have set-up your `PublicKey` correctly in `lambda.conf`, running
 `./lambda-cli.py getbalance` will return _your_ current balance.
 
+If you set a different team's `PublicKey`, your submissions will still work, but
+running `getbalance` will return that team's balance rather than your own.
+
 ### Submitting solutions to block task and puzzle
 
 Similarly, if you have set-up your `PrivateKey`, you can use `lambda-cli.py` to

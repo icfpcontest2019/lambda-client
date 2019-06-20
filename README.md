@@ -27,6 +27,9 @@ PrivateKey = <your private id>
 PublicKey = <your public id>
 ```
 
+**NB**: if you change `lambda.conf`, you must restart the daemon process for the
+changes to take effect.
+
 ## Usage
 
 ### Basic usage
